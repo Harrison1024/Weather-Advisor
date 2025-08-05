@@ -12,7 +12,7 @@ def clima(clima_id):
     elif clima_id >= 500 and clima_id <= 531:
         return "Lluvia 🌧️"
     elif clima_id >= 600 and clima_id <= 622:
-        return "Nieve 🌨️"
+        return "Nevado 🌨️"
     elif clima_id >= 700 and clima_id <= 781:
         return "No espcificado"
     elif clima_id == 800:
@@ -29,9 +29,9 @@ weather_params = {
     "appid" : API_KEY
 }
 
-response = requests.get(WEATHER_API_ENDPOINT, params=weather_params)
-response.raise_for_status()
-data = response.json()
+response_weather = requests.get(WEATHER_API_ENDPOINT, params=weather_params)
+response_weather.raise_for_status()
+data = response_weather.json()
 
 # Informacion extraída:
 pais = data["city"]["country"]
@@ -42,7 +42,11 @@ hoy = datetime.now().strftime('%Y-%m-%d')
 pronosticos_hoy = [pronostico for pronostico in lista_pronosticos if pronostico['dt_txt'].startswith(hoy)]
 pronosticos_hoy.append(lista_pronosticos[len(pronosticos_hoy)])
 
-print(f"Pais: {pais}\nCiudad: {city_name}")
+mensaje = "Pronóstico del clima:\n"
+
+# mensaje += f"Pais: {pais}\nCiudad: {city_name}\nFecha: {hoy}\n"
+mensaje += f"{hoy} {city_name} {pais}\n"
+# print(f"Pais: {pais}\nCiudad: {city_name}\nFecha: {hoy}")
 
 for pronostico in pronosticos_hoy:
     tiempo = pronostico['dt_txt'].split(" ")
@@ -51,8 +55,22 @@ for pronostico in pronosticos_hoy:
     temperatura = pronostico["main"]["temp"]
     clima_id = int(pronostico["weather"][0]["id"])
     clima_ahora = clima(clima_id)
-    print(f"{hora_12} - {temperatura}° - {clima_ahora}")
+    mensaje += f"{hora_12} {temperatura}° {clima_ahora}\n"
+    # print(f"{hora_12} - {temperatura}° - {clima_ahora}")
+
 
 # print(pronosticos_hoy)
 
+TELEGRAM_API_ENDPOINT = f'https://api.telegram.org/bot{TELEGRAM_BOT_KEY}/sendMessage'
+telegram_params = {
+    'chat_id': TELEGRAM_USER,
+    'text': mensaje
+}
+
+response_telegram = requests.post(TELEGRAM_API_ENDPOINT, data=telegram_params)
+
+if response_telegram.status_code == 200:
+    print("Mensaje enviado correctamente")
+else:
+    print("Error al enviar el mensaje", response_telegram.text)
 
